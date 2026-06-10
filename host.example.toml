@@ -1,0 +1,29 @@
+# VaspAuto host configuration file.
+#
+# Copy this file to ~/.config/vaspauto/host.toml and edit it for your cluster.
+# Each cluster should have its own host.toml deployed at that location.
+
+name = "my_hpc"
+# string returned by `hostname` command (both login node and task node),
+# can be a pattern supported by fnmatch module. error-checking only, can be unset
+match = ["node*"]
+default_partition = "partition1"
+home_dir = "/path/to/your/home/dir"
+
+[partitions]
+partition1 = { cpus_per_node = 64, phys_cpus_per_node = 64 }
+partition2 = { cpus_per_node = 96, phys_cpus_per_node = 96 }
+
+[paths]
+vasp_pot_pbe = "$HOME/data/VASP_POT/pot_PBE"
+vasp_pot_lda = "$HOME/data/VASP_POT/pot_LDA"
+cp2k_data = "$HOME/data/cp2k"
+
+[modules]
+common = "HOME={home_dir}\nmodule purge"  # {home_dir} is substituted by home_dir in this config file
+vasp = "module add vasp"
+cp2k = "module add cp2k"
+python = """
+module add anaconda3
+conda activate venv
+"""

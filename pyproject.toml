@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vaspauto"
+version = "5.2"
+description = "Automated VASP / CP2K calculation framework for HPC clusters"
+authors = [{name = "YCX"}]
+requires-python = ">=3.9"
+dependencies = [
+    "filelock",
+    "tomli; python_version < '3.11'",
+]
+
+[project.scripts]
+vaspauto = "vaspauto.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
