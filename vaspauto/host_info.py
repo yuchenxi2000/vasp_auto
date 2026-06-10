@@ -15,6 +15,7 @@ import socket
 import fnmatch
 import pathlib
 import sys
+from typing import Optional
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -30,7 +31,7 @@ def _ensure_nl(s: str) -> str:
 
 
 class HostInfo:
-    def __init__(self, config_path = None):  # type: (os.PathLike | None) -> None
+    def __init__(self, config_path: Optional[str] = None):
         self.hostname = socket.gethostname()
         if config_path:
             self.config_path = pathlib.Path(config_path)

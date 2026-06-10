@@ -31,7 +31,7 @@ pip install -e .          # editable install (recommended for development)
 pip install .             # regular install
 ```
 
-Requirements: Python ≥ 3.9, `filelock`, `tomli` (only needed on Python < 3.11).
+Requirements: Python ≥ 3.10, `filelock`, `tomli` (only needed on Python < 3.11).
 
 ### 2. Configure your cluster
 

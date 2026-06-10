@@ -23,7 +23,7 @@ pip install -e .          # 开发模式安装（推荐）
 pip install .             # 正式安装
 ```
 
-依赖：Python ≥ 3.9、`filelock`、`tomli`（Python < 3.11 时需要）。
+依赖：Python ≥ 3.10、`filelock`、`tomli`（Python < 3.11 时需要）。
 
 ### 2. 配置集群信息
 

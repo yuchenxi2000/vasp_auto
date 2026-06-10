@@ -21,7 +21,8 @@ References:
 """
 import dataclasses
 import re
-import typing
+from collections.abc import Generator
+from typing import Optional
 
 
 @dataclasses.dataclass
@@ -168,7 +169,7 @@ class Incar:
     def set(self, key: str, value):
         self.kvs[key] = [str(value)]
 
-    def get(self, key: str) -> typing.Optional[str]:
+    def get(self, key: str) -> Optional[str]:
         """Return the first value for *key*, or None.
 
         VASP allows duplicate INCAR tags but only the *first* occurrence
@@ -185,7 +186,7 @@ class Incar:
     # ------------------------------------------------------------------
 
     def _emit_block(self, kvs: dict, indent: int = 0
-                    ) -> typing.Generator[str, None, None]:
+                    ) -> Generator[str, None, None]:
         """
         Recursively emit lines for a block of key-value pairs.
 
@@ -220,7 +221,7 @@ class Incar:
             yield from self._emit_block(sub_kvs, indent + 1)
             yield f'{tab}}}'
 
-    def iter_lines(self) -> typing.Generator[str, None, None]:
+    def iter_lines(self) -> Generator[str, None, None]:
         yield from self._emit_block(self.kvs)
 
     def to_str(self) -> str:
@@ -234,7 +235,7 @@ class Incar:
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_file(cls, filepath) -> typing.Self:
+    def from_file(cls, filepath) -> 'Incar':
         obj = cls()
         with open(filepath, 'r') as fin:
             s = fin.read()
@@ -242,7 +243,7 @@ class Incar:
         return obj
 
     @classmethod
-    def from_str(cls, s: str) -> typing.Self:
+    def from_str(cls, s: str) -> 'Incar':
         obj = cls()
         obj.parse_str(s)
         return obj
@@ -254,25 +255,3 @@ class Incar:
 
     def __str__(self):
         return self.to_str()
-
-
-if __name__ == '__main__':
-    test_incar_str = """
-    A=0;A=1
-    #BBBBBBB=6666666
-    B#BBBBBB=2333 # asdasd
-    dadadadadadada=\\
-    asd\\
-    1 0.0 \\
-    000
-    pppp  ="adsdasdfff
-    lplpkokok
-0)   jfijiow"
-    aaa;aa=0
-    """
-
-    incar = Incar()
-    incar.parse_str(test_incar_str)
-    incar.set('B', 'lalala')
-    incar.set('pppp', 'kokokokoko')
-    print(incar)
