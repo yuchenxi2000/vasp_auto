@@ -23,7 +23,7 @@ from vaspauto.host_info import host
 from vaspauto import calc_runner
 
 # parse arguments
-parser = argparse.ArgumentParser(description='automatic python script for vasp calculation, author: YCX',
+parser = argparse.ArgumentParser(description='%(prog)s for automatic HPC calculation, author: YCX',
                                  prog='VaspAuto')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s 5.1')
 parser.add_argument('-c', '--config', dest='config', help='config file')
@@ -91,7 +91,7 @@ if 'root_dir' in config['global']:
 elif args.dir is not None:
     root_dir = pathlib.Path(args.dir)
 else:
-    root_dir = pathlib.Path('.')
+    root_dir = config_file.parent.resolve()
 check_absolute_dir(root_dir)
 
 # variables
