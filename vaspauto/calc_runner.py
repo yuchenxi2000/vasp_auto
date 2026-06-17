@@ -247,7 +247,21 @@ class VASPCalculation(Calculation):
         os.chdir(self.calc_dir)
         # copy CONTCAR to POSCAR for unconverged run
         if self.status == CalcStatus.UNCONVERGED:
-            shutil.copy(self.calc_dir.joinpath('CONTCAR'), self.calc_dir.joinpath('POSCAR'))
+            # check if this is a NEB calculation (has 01/ directory)
+            if self.calc_dir.joinpath('01').is_dir():
+                tag_images = self.incar_obj.get('IMAGES')
+                n_images = 0 if tag_images is None else int(tag_images)
+                # intermediate images: 01/ through 0{n_images}/
+                # skip 00/ (initial) and 0{n_images+1}/ (final)
+                for i in range(1, n_images + 1):
+                    image_dir = self.calc_dir.joinpath(f'{i:02d}')
+                    contcar = image_dir.joinpath('CONTCAR')
+                    poscar = image_dir.joinpath('POSCAR')
+                    if contcar.exists():
+                        shutil.copy(contcar, poscar)
+            else:
+                shutil.copy(self.calc_dir.joinpath('CONTCAR'),
+                            self.calc_dir.joinpath('POSCAR'))
         # set output files, env and run
         stdout = self.calc_dir.joinpath('out.txt')
         stderr = self.calc_dir.joinpath('err.txt')
