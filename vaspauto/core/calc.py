@@ -9,47 +9,12 @@ import pathlib
 import shutil
 import os
 import enum
-import filelock
 import re
+from typing import Optional
 
-from vaspauto import incar_parser
-from vaspauto import cp2k_parser
-from vaspauto import potcar
-from vaspauto.host_info import host
-
-
-def write_auto_gen_k_mesh(file: os.PathLike, nk_list: list):
-    fout = open(file, 'w')
-    fout.write('A\n')
-    fout.write('0\n')
-    fout.write('Gamma\n')
-    for k_idx in range(3):
-        fout.write(str(nk_list[k_idx]))
-        fout.write('\n' if k_idx == 2 else ' ')
-    fout.write('0 0 0\n')
-    fout.close()
-
-
-def read_last_line(fname: os.PathLike) -> str:
-    fin = open(fname, 'rb')
-    try:
-        fin.seek(-1, 2)
-    except OSError:
-        # empty file
-        return ''
-    pos = fin.tell()
-    # skip last \n if last character is \n
-    if fin.read(1) == b'\n':
-        pos -= 1
-    # find \n
-    while pos >= 0:
-        fin.seek(pos)
-        if fin.read(1) == b'\n' and pos != 0:
-            break
-        pos -= 1
-    last_line = fin.readline().decode()
-    fin.close()
-    return last_line
+from vaspauto.io import incar, potcar, cp2k_input, kpoints
+from vaspauto.core.host_info import host
+from vaspauto.core.util import read_last_line
 
 
 pattern_ionic_step = re.compile(r' *[0-9]+ F= ')
@@ -75,21 +40,42 @@ class Calculation:
     def __init__(self, calculation: dict, root_dir: pathlib.Path):
         self.root_dir = root_dir
         self.calc_dir = root_dir.joinpath(calculation['calc_dir'])
-        self.calc_dir.mkdir(exist_ok=True, parents=True)
         self.calculation = calculation
+        self.status = CalcStatus.NOT_CALCULATED
+        self.name: str = calculation['name']
         if 'executable' in calculation:
-            self.executable = calculation['executable']
+            self.executable: str = calculation['executable']
         else:
             self.executable = 'vasp_std'
-        # preprocess & check status
+        # DAG attributes (populated by dag.py)
+        self.deps: list[Calculation] = []
+        self.neighbors: set[Calculation] = set()
+        self.comp: int = -1
+        self.rank: int = -1
+
+    def get_lock_file_path(self) -> pathlib.Path:
+        return self.calc_dir.joinpath('.lock')
+
+    def rm_lock_file(self) -> None:
+        lock_file = self.get_lock_file_path()
+        if lock_file.is_file():
+            lock_file.unlink()
+
+    def prepare(self):
+        """Set up for execution: create directory, preprocess, check status, lock."""
+        self.calc_dir.mkdir(exist_ok=True, parents=True)
         self.preprocess()
         self.status = self.check_status()
-        # avoid different tasks running the same calculation at the same time
-        # use SoftFileLock instead of FileLock, because tasks are running on different nodes
-        self.lock = filelock.SoftFileLock(self.calc_dir.joinpath('.lock'), blocking=False)
 
     def check_status(self) -> CalcStatus:
         return CalcStatus.FINISHED
+
+    def get_unfinished_deps(self) -> 'list[Calculation]':
+        unfinished_deps_list: 'list[Calculation]' = []
+        for dep in self.deps:
+            if dep.status != CalcStatus.FINISHED:
+                unfinished_deps_list.append(dep)
+        return unfinished_deps_list
 
     def get_file_path(self, file_info, default_relative: str = 'root_dir') -> pathlib.Path:
         if isinstance(file_info, str):
@@ -169,7 +155,7 @@ class Calculation:
 
 class VASPCalculation(Calculation):
     def __init__(self, calculation: dict, root_dir: pathlib.Path):
-        self.incar_obj = None
+        self.incar_obj: Optional[incar.Incar] = None
         self.num_ionic_steps = 0
         self.nsw = 0
         self.ibrion = -1
@@ -205,7 +191,7 @@ class VASPCalculation(Calculation):
             return CalcStatus.NEEDS_RERUN
 
     def preprocess_generate_kpoints(self, action: dict):
-        write_auto_gen_k_mesh(self.calc_dir.joinpath('KPOINTS'), action['kp'])
+        kpoints.write_auto_gen_k_mesh(self.calc_dir.joinpath('KPOINTS'), action['kp'])
 
     def preprocess_write_potcar(self, action: dict):
         if 'value' in action:
@@ -223,21 +209,21 @@ class VASPCalculation(Calculation):
 
     def preprocess_set_label_incar(self, action: dict):
         if self.incar_obj is None:
-            self.incar_obj = incar_parser.Incar.from_file(self.calc_dir.joinpath('INCAR'))
+            self.incar_obj = incar.Incar.from_file(self.calc_dir.joinpath('INCAR'))
         self.incar_obj.set(action['label'], action['value'])
 
     def preprocess_del_label_incar(self, action: dict):
         if self.incar_obj is None:
-            self.incar_obj = incar_parser.Incar.from_file(self.calc_dir.joinpath('INCAR'))
+            self.incar_obj = incar.Incar.from_file(self.calc_dir.joinpath('INCAR'))
         self.incar_obj.del_key(action['label'])
 
     def preprocess_new_blank_incar(self, _: dict):
-        self.incar_obj = incar_parser.Incar()
+        self.incar_obj = incar.Incar()
 
     def preprocess(self):
         super().preprocess()
         if self.incar_obj is None:
-            self.incar_obj = incar_parser.Incar.from_file(self.calc_dir.joinpath('INCAR'))
+            self.incar_obj = incar.Incar.from_file(self.calc_dir.joinpath('INCAR'))
         else:
             self.incar_obj.write_file(self.calc_dir.joinpath('INCAR'))
 
@@ -304,13 +290,13 @@ class CP2KCalculation(Calculation):
 
     def preprocess_cp2k_input(self, action: dict):
         cp2k_input_file = self.get_file_path(action['value'], default_relative='root_dir')
-        self.cp2k_input = cp2k_parser.Section.from_file(str(cp2k_input_file))
+        self.cp2k_input = cp2k_input.Section.from_file(str(cp2k_input_file))
 
     def preprocess_cp2k_input_update(self, action: dict):
         if self.cp2k_input is None:
             raise Exception('please give cp2k_input first!')
         else:
-            new_sec = cp2k_parser.Section.from_dict(action['value'])
+            new_sec = cp2k_input.Section.from_dict(action['value'])
             if 'path' in action:
                 self.cp2k_input.get_subsec(action['path']).update(new_sec)
             else:
@@ -345,7 +331,7 @@ class CP2KCalculation(Calculation):
             self.cp2k_input.del_kv('MOTION/MD/STEP_START_VAL')
             self.cp2k_input.del_kv('MOTION/MD/TIME_START_VAL')
             restart_file = f'{self.project_name}-1.restart'
-            self.cp2k_input.set('EXT_RESTART', cp2k_parser.Section.from_dict({
+            self.cp2k_input.set('EXT_RESTART', cp2k_input.Section.from_dict({
                 'RESTART_FILE_NAME': restart_file, 'RESTART_COUNTERS': 'T', 'RESTART_RTP': 'F'
             }, name='EXT_RESTART'))
             self.cp2k_input.set('MOTION/MD/STEPS', self.step_end - self.last_step)

@@ -1,0 +1,41 @@
+version = '5.3'
+
+[[calculation]]
+name = "calc8"
+calc_dir = "calc8"
+dependence = ["calc7"]
+
+[[calculation]]
+name = "calc1"
+calc_dir = "calc1"
+dependence = []
+
+[[calculation]]
+name = "calc2"
+calc_dir = "calc2"
+dependence = []
+
+[[calculation]]
+name = "calc3"
+calc_dir = "calc3"
+dependence = ["calc1", "calc2"]
+
+[[calculation]]
+name = "calc7"
+calc_dir = "calc7"
+dependence = []
+
+[[calculation]]
+name = "calc4"
+calc_dir = "calc4"
+dependence = ["calc3"]
+
+[[calculation]]
+name = "calc5"
+calc_dir = "calc5"
+dependence = ["calc1", "calc3"]
+
+[[calculation]]
+name = "calc6"
+calc_dir = "calc6"
+dependence = ["calc3", "calc5"]

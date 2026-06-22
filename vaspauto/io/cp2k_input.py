@@ -12,6 +12,7 @@ def str2bool(s: str) -> bool:
     return s.lower().startswith(('t', '.t', 'y'))
 
 
+@dataclasses.dataclass
 class KeyValue:
     k = ''
     v = ''
@@ -31,8 +32,8 @@ class KeyValue:
 class Section:
     name = ''
     params = ''
-    subsecs: list = dataclasses.field(default_factory=list)
-    kvs: list = dataclasses.field(default_factory=list)
+    subsecs: 'list[Section]' = dataclasses.field(default_factory=list)
+    kvs: 'list[KeyValue]' = dataclasses.field(default_factory=list)
 
     @classmethod
     def empty_sec_with_name(cls, name):
@@ -271,66 +272,3 @@ class Section:
 
     def __str__(self):
         return self.to_str()
-
-
-if __name__ == '__main__':
-    lines = [
-        '&SEC1 NO',
-        '   K1 1 2 3',
-        '   K1 a b c',
-        '   &SEC2',
-        '       K2 a c 2',
-        '   &END',
-        '   K3 0',
-        '&END',
-    ]
-
-    # sec = Section()
-    # sec = sec.from_lines(lines)
-    # sec = Section.from_lines(lines)
-
-    # sec.get_subsec_recur('SEC1').set_kv('K1', 'hahaha')
-    # sec.set_kv_recur('SEC1/K1', 'hahaha')
-    # print(sec.subsecs[0])
-
-    sec = Section.from_dict({
-        'SEC1': {
-            'K2': 1,
-            'K3': 2,
-            'SEC2': {
-                '_': 'NO',
-                'sec4': 'a'
-            },
-        },
-        'SEC3': {'K0': 'hahaha'},
-        'K233': '666'
-    })
-
-    sec2 = Section.from_dict({
-        'SEC1': {
-            'KK': 3,
-            'K3': 'a',
-            'SEC2': {
-                '_': 'YES',
-                'sec4': 'a',
-                'sss': {
-                    'll': 555,
-                },
-            },
-            'SEC5': {
-                's': 'g'
-            },
-        },
-        'K23333': '666666'
-    })
-
-    sec2.del_kv('SEC1/KK')
-    sec2.del_kv('SEC1/SEC2/sec4')
-    print(sec2)
-
-    # sec.update(sec2)
-    # print(sec)
-
-    # print(sec2)
-
-    # print(Section.from_dict({}))

@@ -1,7 +1,7 @@
 """
 Only VASP 5.4 pseudopotentials supported
 """
-from vaspauto.host_info import host
+from vaspauto.core.host_info import host
 import subprocess
 import argparse
 

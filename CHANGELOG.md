@@ -1,5 +1,25 @@
 # Changelog
 
+## 5.3 (2026-06)
+
+### 调度与执行
+
+- 新增 `dag.py`：将 DAG 算法（依赖解析、连通分量、拓扑排序）从 `task_scheduler.py` 抽离为纯函数
+- `Calculation.__init__` 改为零副作用（不建目录、不预处理、不检查状态、不加锁），所有准备工作移至 `prepare()` 方法
+- 依赖关系改用对象引用，不再往 dict 里塞 `_dep`/`_neighbor`/`_group` 等临时键
+- 术语 `group` → `component`（连通分量），CLI 参数同步更新：`--print-groups` → `--print-comps`
+
+### 计算引擎
+
+- NEB 计算支持断点续跑：从 INCAR 读取 `IMAGES` 参数，将中间态目录（`01/` 到 `0N/`）的 CONTCAR 复制为 POSCAR
+
+### Python 版本
+
+- 最低 Python 要求从 3.9 提升至 3.10（`typing.Self` 不可用）
+- 类型注解清理：弃用 `typing.Generator` → `collections.abc.Generator`
+
+---
+
 ## 5.2 (2026-06)
 
 对项目进行大范围重构，使其更加现代化、更易用
@@ -32,6 +52,7 @@
 - 新增 glob 变量：`{ glob = "*.vasp", dir = "structures", strip_ext = true }`
 - 移除编译模式（compile mode）
 - `--write-expanded-config` 在缺少 `tomli_w` 时给出安装提示
+- `root_dir` 未指定时默认取配置文件所在目录（而非 CWD）
 
 ---
 

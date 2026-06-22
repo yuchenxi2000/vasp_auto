@@ -1,4 +1,4 @@
 """python3 -m vaspauto entry point."""
-from vaspauto.cli import main
+from .cli import main
 
 main()

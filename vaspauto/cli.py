@@ -17,13 +17,14 @@ def main():
         sys.exit(1)
 
     cmd = sys.argv[1]
-    # Strip the subcommand so the target module sees its own argv
-    sys.argv = [sys.argv[0]] + sys.argv[2:]
+    argv = sys.argv[2:]
 
     if cmd == 'submit':
-        from vaspauto import task_submit   # module-level code runs
+        from vaspauto.submit import main as submit_main
+        submit_main(argv)
     elif cmd == 'run':
-        from vaspauto import task_scheduler
+        from vaspauto.run import main as run_main
+        run_main(argv)
     else:
         print(f"Unknown command: {cmd}")
         print("Available: submit, run")

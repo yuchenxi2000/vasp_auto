@@ -3,7 +3,7 @@ Tests for INCAR parser (including VASP 6 nested tags).
 Run: python3 -m pytest incar_parser_test.py
   or: PYTHONPATH=. python3 incar_parser_test.py
 """
-from vaspauto.incar_parser import Incar
+from vaspauto.io.incar import Incar
 
 
 def test_parse_flat():
