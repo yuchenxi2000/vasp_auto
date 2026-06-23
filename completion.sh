@@ -1,4 +1,4 @@
-# vaspauto shell completion — subcommand names only (submit / run)
+# vaspauto shell completion — subcommand names only (submit / run / analysis)
 #
 # Bash:  source completion.sh
 # Zsh:   source completion.sh
@@ -7,10 +7,10 @@
 _vaspauto_complete() {
     if [ "$COMP_CWORD" -eq 1 ] 2>/dev/null; then
         # bash
-        COMPREPLY=($(compgen -W "submit run" -- "${COMP_WORDS[1]}"))
+        COMPREPLY=($(compgen -W "submit run analysis" -- "${COMP_WORDS[1]}"))
     elif [[ "$words" != "" ]]; then
         # zsh
-        compadd submit run
+        compadd submit run analysis
     fi
 }
 

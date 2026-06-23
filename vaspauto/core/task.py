@@ -3,6 +3,8 @@ import filelock
 import warnings
 from pathlib import Path
 from os import PathLike
+
+from vaspauto import __version__
 from typing import Optional
 
 if sys.version_info >= (3, 11):
@@ -89,7 +91,7 @@ class Task:
                 for calc in comp:
                     calc_list.append(calc)
             config = {
-                'version': '5.3',
+                'version': __version__,
                 'global': {
                     'root_dir': self.root_dir
                 },

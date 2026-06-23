@@ -9,20 +9,12 @@ from vaspauto.core.host_info import host
 
 
 def sub_tilde_home_dir(s: str) -> str:
-    pattern_tilde = re.compile(r'\\\\|~|\\~')
-
-    def sub_func_tilde(g: re.Match) -> str:
-        match_str = g.group(0)
-        if match_str == '\\\\':
-            return '\\'
-        elif match_str == '\\~':
-            return '\\~'
-        elif match_str == '~':
-            return host.home_dir
-        else:
-            return ''
-
-    return re.sub(pattern_tilde, sub_func_tilde, s)
+    """Expand a leading ``~`` to the cluster home directory (Unix semantics)."""
+    if s.startswith('~/'):
+        return host.home_dir + s[1:]
+    elif s == '~':
+        return host.home_dir
+    return s
 
 
 def assert_absolute_dir(dir_path: Path) -> None:

@@ -92,7 +92,7 @@ vaspauto run -c my_calc.toml --print-groups -n 1
 |--------|---------|-------------|
 | Installed entry point | `vaspauto submit ...` / `vaspauto run ...` | After `pip install` |
 | `-m` invocation | `python3 -m vaspauto submit ...` | Without install; PYTHONPATH must include the project root |
-| Direct module call | `python3 -m vaspauto.task_scheduler ...` | Inside generated Slurm scripts (PYTHONPATH is set automatically) |
+| Direct module call | `python3 -m vaspauto.run ...` | Inside generated Slurm scripts (PYTHONPATH is set automatically) |
 
 ## CLI Reference
 
@@ -127,6 +127,23 @@ See [resource allocation docs](docs/resource-allocation-logic.md) for the deriva
 | `--print-groups` | Print task group details, then exit |
 | `--rm-locks` | Remove all lock files (use after cancelling a job) |
 | `--write-expanded-config` | Export the expanded config (debug; requires `tomli_w`) |
+
+## Data Analysis
+
+After calculations finish, use `vaspauto analysis` for post-processing:
+
+```bash
+# Collect energies and statuses of all tasks into a CSV
+vaspauto analysis energy -c config.toml -o energy.csv
+
+# Re-interpolate a NEB path
+vaspauto analysis interp --spec "0,1,3:2" -p POSCAR_00 POSCAR_01 POSCAR_02 POSCAR_03 -d output/
+```
+
+| Document | Description |
+|----------|-------------|
+| [analysis-energy.md](docs/analysis-energy.md) | Energy & status report |
+| [analysis-interp.md](docs/analysis-interp.md) | NEB path re-interpolation |
 
 ## Documentation
 

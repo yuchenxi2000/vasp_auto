@@ -2,21 +2,43 @@
 
 ## 5.3 (2026-06)
 
+### 包结构
+
+- 子模块拆分：`core/`（计算引擎、DAG、任务调度）、`io/`（POSCAR/INCAR/POTCAR/CP2K 解析）、`analysis/`（数据分析）
+- `calc_runner.py` → `core/calc.py`，`task_scheduler.py` → `run.py`，`task_submit.py` → `submit.py`
+
 ### 调度与执行
 
-- 新增 `dag.py`：将 DAG 算法（依赖解析、连通分量、拓扑排序）从 `task_scheduler.py` 抽离为纯函数
-- `Calculation.__init__` 改为零副作用（不建目录、不预处理、不检查状态、不加锁），所有准备工作移至 `prepare()` 方法
-- 依赖关系改用对象引用，不再往 dict 里塞 `_dep`/`_neighbor`/`_group` 等临时键
-- 术语 `group` → `component`（连通分量），CLI 参数同步更新：`--print-groups` → `--print-comps`
+- 新增 `dag.py`：DAG 算法（依赖解析、连通分量、拓扑排序）抽离为纯函数
+- `Calculation.__init__` 改为零副作用，`prepare()` 负责建目录、预处理、状态检查。Calculation不再加锁，由Task.run进行加锁
+- 依赖关系改用对象引用，不再往 dict 塞 `_dep` 等临时键
+- 术语 `group` → `component`（连通分量），`--print-groups` → `--print-comps`
+- `root_dir` 未指定时默认取配置文件所在目录
+
+### CLI
+
+- `submit.py` / `run.py` 改为 `main(argv)` 函数式入口，不再依赖 `sys.argv` 操作
+- 版本号统一到 `vaspauto.__version__`
+- shell 补全脚本（bash / zsh）
+- 集群 CPU 核数从 `[partitions]` 表读取，不再设顶层字段
 
 ### 计算引擎
 
-- NEB 计算支持断点续跑：从 INCAR 读取 `IMAGES` 参数，将中间态目录（`01/` 到 `0N/`）的 CONTCAR 复制为 POSCAR
+- NEB 断点续跑：从 INCAR 读取 `IMAGES`，将中间态 CONTCAR 复制为 POSCAR
+
+### 分析模块
+
+- 新增 `vaspauto analysis` 子命令（energy 汇总、interp 路径插值）
+- `analysis interp`：三次样条插值 + 逐对插值，支持路径描述语句 DSL
 
 ### Python 版本
 
-- 最低 Python 要求从 3.9 提升至 3.10（`typing.Self` 不可用）
-- 类型注解清理：弃用 `typing.Generator` → `collections.abc.Generator`
+- 最低 Python 要求 ≥ 3.10
+- 类型注解：`typing.Self` → `'Incar'`，`typing.Generator` → `collections.abc.Generator`
+
+### Bug 修复
+
+- `~` 路径展开改为仅展开行首（符合 Unix shell 语义）
 
 ---
 

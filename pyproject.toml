@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vaspauto"
-version = "5.2"
+dynamic = ["version"]
 description = "Automated VASP / CP2K calculation framework for HPC clusters"
 authors = [{name = "YCX"}]
 requires-python = ">=3.10"
@@ -13,8 +13,14 @@ dependencies = [
     "tomli; python_version < '3.11'",
 ]
 
+[project.optional-dependencies]
+analysis = ["scipy", "numpy"]
+
 [project.scripts]
 vaspauto = "vaspauto.cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "vaspauto.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]

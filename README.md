@@ -84,7 +84,7 @@ vaspauto run -c my_calc.toml --print-groups -n 1
 |------|------|---------|
 | 安装后的命令 | `vaspauto submit ...` / `vaspauto run ...` | `pip install` 后直接使用 |
 | `-m` 模块方式 | `python3 -m vaspauto submit ...` | 未安装时，PYTHONPATH 需指向项目根 |
-| 直接调模块 | `python3 -m vaspauto.task_scheduler ...` | Slurm 脚本内部调用（自动设置 PYTHONPATH） |
+| 直接调模块 | `python3 -m vaspauto.run ...` | Slurm 脚本内部调用（自动设置 PYTHONPATH） |
 
 ## 命令行参考
 
@@ -118,6 +118,23 @@ vaspauto run -c my_calc.toml --print-groups -n 1
 | `--print-groups` | 打印任务组详情后退出 |
 | `--rm-locks` | 清除所有锁文件（手动取消任务后使用） |
 | `--write-expanded-config` | 输出变量展开后的配置文件（调试用，需 `tomli_w`） |
+
+## 数据分析
+
+计算完成后，可通过 `vaspauto analysis` 子命令进行后处理：
+
+```bash
+# 汇总所有计算任务的能量和状态到 CSV
+vaspauto analysis energy -c config.toml -o energy.csv
+
+# 对 NEB 路径重新插值
+vaspauto analysis interp --spec "0,1,3:2" -p POSCAR_00 POSCAR_01 POSCAR_02 POSCAR_03 -d output/
+```
+
+| 文档 | 说明 |
+|------|------|
+| [analysis-energy.md](docs/analysis-energy.md) | 计算结果汇总 |
+| [analysis-interp.md](docs/analysis-interp.md) | NEB 路径重新插值 |
 
 ## 配置文件格式
 

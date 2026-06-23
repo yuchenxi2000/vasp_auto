@@ -8,35 +8,37 @@ import argparse
 import pathlib
 import time
 import subprocess
+
+from vaspauto import __version__
 from vaspauto.core.host_info import host
-
-# project root for PYTHONPATH in generated Slurm scripts
-_vaspauto_root = pathlib.Path(__file__).resolve().parent.parent
-
-# parse arguments
-parser = argparse.ArgumentParser(description='%(prog)s for automatic HPC calculation, author: YCX',
-                                 prog='VaspAuto')
-parser.add_argument('-v', '--version', action='version', version='%(prog)s 5.2')
-parser.add_argument('-p', '--partition', dest='partition', help='partition to submit')
-parser.add_argument('-N', '--nodes', dest='nodes', type=int, default=1, help='number of nodes')
-parser.add_argument('-n', dest='num_tasks', type=int, help='total tasks')
-parser.add_argument('--nt', dest='tasks_per_node', type=int, help='number of tasks per node')
-parser.add_argument('--nc', dest='cpus_per_task', type=int, help='number of cpus per task')
-parser.add_argument('-J', '--job-name', dest='name', type=str, default='VASP', help='task name')
-parser.add_argument('-d', '--dir', dest='dir', help='task root dir')
-parser.add_argument('-c', '--config', dest='config', help='task config file')
-parser.add_argument('-o', '--output', dest='output',
-                    help='output task script file (which can be submitted using sbatch)')
-parser.add_argument('-s', '--submit', dest='submit', action='store_true', help='submit job immediately')
-parser.add_argument('-t', '--task', dest='task', type=str, default='vasp+py',
-                    help='task type. supported tasks: vasp, vasp+py, cp2k, cp2k+py')
-parser.add_argument('-i', '--input', dest='input', type=str,
-                    help='input file (for task cp2k)')
-parser.add_argument('--env', dest='env', type=str, help='environments separated by commas, vasp/cp2k/py')
 
 
 def main(argv=None):
+    # parse arguments
+    parser = argparse.ArgumentParser(description='%(prog)s for automatic HPC calculation, author: YCX',
+                                     prog='VaspAuto')
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'%(prog)s {__version__}')
+    parser.add_argument('-p', '--partition', dest='partition', help='partition to submit')
+    parser.add_argument('-N', '--nodes', dest='nodes', type=int, default=1, help='number of nodes')
+    parser.add_argument('-n', dest='num_tasks', type=int, help='total tasks')
+    parser.add_argument('--nt', dest='tasks_per_node', type=int, help='number of tasks per node')
+    parser.add_argument('--nc', dest='cpus_per_task', type=int, help='number of cpus per task')
+    parser.add_argument('-J', '--job-name', dest='name', type=str, default='VASP', help='task name')
+    parser.add_argument('-d', '--dir', dest='dir', help='task root dir')
+    parser.add_argument('-c', '--config', dest='config', help='task config file')
+    parser.add_argument('-o', '--output', dest='output',
+                        help='output task script file (which can be submitted using sbatch)')
+    parser.add_argument('-s', '--submit', dest='submit', action='store_true', help='submit job immediately')
+    parser.add_argument('-t', '--task', dest='task', type=str, default='vasp+py',
+                        help='task type. supported tasks: vasp, vasp+py, cp2k, cp2k+py')
+    parser.add_argument('-i', '--input', dest='input', type=str,
+                        help='input file (for task cp2k)')
+    parser.add_argument('--env', dest='env', type=str, help='environments separated by commas, vasp/cp2k/py')
     args = parser.parse_args(argv)
+
+    # project root for PYTHONPATH in generated Slurm scripts
+    _vaspauto_root = pathlib.Path(__file__).resolve().parent.parent
 
     job_dir = args.dir if args.dir else '.'
     job_dir = pathlib.Path(job_dir).absolute()
@@ -162,7 +164,7 @@ def main(argv=None):
             job_script_string += host.environment_py_str
         job_script_string += f"""
 cd {job_dir}
-python3 -m vaspauto.task_scheduler -c {config_file} -n {ntasks} --nc {cpus_per_task} 1>pyout_{job_name}.txt 2>pyerr_{job_name}.txt {dir_option}
+python3 -m vaspauto.run -c {config_file} -n {ntasks} --nc {cpus_per_task} 1>pyout_{job_name}.txt 2>pyerr_{job_name}.txt {dir_option}
 """
     elif args.task == 'vasp':
         if not args.env:

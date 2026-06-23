@@ -1,5 +1,6 @@
 """
-TODO: test it
+Write a csv file containing name, energy, status, calculation dir
+of all calculations defined in config file
 """
 import argparse
 from pathlib import Path
@@ -9,15 +10,14 @@ from vaspauto.core.task import Task
 from vaspauto.core.util import get_energy_str_oszicar
 from vaspauto.io.incar import Incar
 
-# parse arguments
-parser = argparse.ArgumentParser(description='write energy and other information into txt file')
-parser.add_argument('-c', '--config', dest='config', default='config.toml', help='config file')
-parser.add_argument('-d', '--dir', dest='dir',
-                    help='calculation root dir. This will overwrite root dir option in config file')
-parser.add_argument('-o', '--output', dest='output', default='energy.csv', help='output csv file')
-
 
 def main(argv=None):
+    # parse arguments
+    parser = argparse.ArgumentParser(description='write energy and other information into csv file')
+    parser.add_argument('-c', '--config', dest='config', default='config.toml', help='config file')
+    parser.add_argument('-d', '--dir', dest='dir',
+                        help='calculation root dir. This will overwrite root dir option in config file')
+    parser.add_argument('-o', '--output', dest='output', default='energy.csv', help='output csv file')
     args = parser.parse_args(argv)
 
     # construct Task

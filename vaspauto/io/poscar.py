@@ -36,6 +36,7 @@ class Poscar:
                 nums = fin.readline().strip().split()
                 for iaxis in range(3):
                     self.atoms[iatom, iaxis] = float(nums[iaxis])
+        return self
 
     def write_file(self, file_path):
         with open(file_path, 'w') as fout:
