@@ -15,6 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 analysis = ["scipy", "numpy"]
+debug = ["tomli_w"]
 
 [project.scripts]
 vaspauto = "vaspauto.cli:main"

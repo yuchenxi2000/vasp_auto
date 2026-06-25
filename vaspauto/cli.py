@@ -38,7 +38,7 @@ def main():
 
 def _analysis_dispatch(argv: list[str]):
     if not argv:
-        print("Usage: vaspauto analysis <energy|interp> [...]")
+        print("Usage: vaspauto analysis <energy|interp|neb> [...]")
         sys.exit(1)
 
     subcmd = argv[0]
@@ -50,9 +50,12 @@ def _analysis_dispatch(argv: list[str]):
     elif subcmd == 'interp':
         from vaspauto.analysis.interp import main as _main
         _main(sub_argv)
+    elif subcmd == 'neb':
+        from vaspauto.analysis.neb import main as _main
+        _main(sub_argv)
     else:
         print(f"Unknown analysis command: {subcmd}")
-        print("Available: energy, interp")
+        print("Available: energy, interp, neb")
         sys.exit(1)
 
 

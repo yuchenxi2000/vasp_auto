@@ -168,7 +168,11 @@ def read_last_line(fname: PathLike) -> str:
 pattern_energy = re.compile(r' *[0-9]+ F= ([+\-.Ee0-9]+)')
 
 
-def get_energy_str_oszicar(oszicar) -> str:
-    last_line = read_last_line(oszicar)
-    m = re.match(pattern_energy, last_line)
-    return m.group(1)
+def get_energy_str_oszicar(oszicar) -> str | None:
+    ener_str: str | None = None
+    with open(oszicar, 'r') as fin:
+        for line in fin:
+            m = re.match(pattern_energy, line)
+            if m is not None:
+                ener_str = m.group(1)
+    return ener_str

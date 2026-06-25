@@ -28,10 +28,12 @@ def main(argv=None):
     for comp in task_obj.calc_comps:
         for calc in comp:
             if isinstance(calc, VASPCalculation):
-                incar = calc.calc_dir.joinpath('OSZICAR')
+                # check status
+                incar = calc.calc_dir.joinpath('INCAR')
                 if incar.is_file():
                     calc.incar_obj = Incar.from_file(incar)
                 status = calc.check_status()
+                # read energy
                 oszicar = calc.calc_dir.joinpath('OSZICAR')
                 if status == CalcStatus.FINISHED and oszicar.is_file():
                     ener = get_energy_str_oszicar(oszicar)

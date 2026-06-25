@@ -18,9 +18,16 @@
 ### 1. 安装
 
 ```bash
-pip install -e .          # 开发模式安装（推荐）
-# 或
-pip install .             # 正式安装
+pip install .                          # 基础安装
+
+# 如需数据分析功能（scipy, numpy）
+pip install ".[analysis]"
+
+# 如需输出展开后的配置文件（--write-expanded-config）
+pip install ".[debug]"
+
+# 安装所有可选功能
+pip install ".[analysis,debug]"
 ```
 
 依赖：Python ≥ 3.10、`filelock`、`tomli`（Python < 3.11 时需要）。

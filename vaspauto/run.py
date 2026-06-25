@@ -27,7 +27,7 @@ def main(argv=None):
                         help='write variable expanded config file for debug. requires tomli_w package')
     parser.add_argument('--print-comps', dest='print_comps', action='store_true',
                         help='print calculation components')
-    parser.add_argument('-n', dest='num_tasks', type=int, required=True, help='total tasks')
+    parser.add_argument('-n', dest='num_tasks', type=int, help='total tasks')
     parser.add_argument('--nc', dest='cpus_per_task', type=int, default=1, help='number of cpus per task')
     parser.add_argument('--rm-locks', dest='rm_locks', action='store_true',
                         help='remove all lock files. these files should be removed before next submission '
@@ -52,6 +52,9 @@ def main(argv=None):
     if args.rm_locks:
         task_obj.rm_lock_files()
         return
+
+    if not args.num_tasks:
+        parser.error('number of tasks (-n option) is required to run calculations!')
 
     # ---- execute ----
     task_obj.run(args.num_tasks, args.cpus_per_task)

@@ -26,9 +26,16 @@ filling, and restart-on-failure so you don't have to.
 ### 1. Install
 
 ```bash
-pip install -e .          # editable install (recommended for development)
-# or
-pip install .             # regular install
+pip install .                          # basic install
+
+# with analysis support (scipy, numpy)
+pip install ".[analysis]"
+
+# with expanded config export (--write-expanded-config)
+pip install ".[debug]"
+
+# all optional features
+pip install ".[analysis,debug]"
 ```
 
 Requirements: Python ≥ 3.10, `filelock`, `tomli` (only needed on Python < 3.11).
