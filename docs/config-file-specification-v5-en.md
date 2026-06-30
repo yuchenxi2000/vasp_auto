@@ -129,6 +129,7 @@ The framework first expands variable loops, then orders tasks by dependency.
 | `executable` | string | no | `"vasp_std"` | Executable name. Starts with `vasp` → VASP mode; starts with `cp2k` → CP2K mode. |
 | `preprocess` | array | no | `[]` | Actions to run before the calculation (in order). |
 | `postprocess` | array | no | `[]` | Actions to run after the calculation. |
+| `parallel` | table | no | `{type = "ncore"}` | Auto parallel tuning (v5.4+). `type = "ncore"` auto-sets NCORE. `type = "off"` for manual. |
 
 ### name — Naming and Variable Expansion
 

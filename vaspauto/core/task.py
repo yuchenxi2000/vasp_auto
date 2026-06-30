@@ -105,8 +105,9 @@ class Task:
         for comp in self.calc_comps:
             for calc in comp:
                 try:
-                    calc.prepare()
+                    calc.mk_calc_dir()
                     with filelock.SoftFileLock(calc.get_lock_file_path(), blocking=False):
+                        calc.prepare()  # avoid two process doing preprocess simultaneously
                         if calc.status == CalcStatus.FINISHED:
                             print(f'skip finished task: {calc.name}', flush=True)
                             continue

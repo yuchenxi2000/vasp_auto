@@ -18,6 +18,8 @@ def main(argv=None):
                         help='NEB calculation dir')
     parser.add_argument('--fix', help='', action='store_true')
     parser.add_argument('--old-fix', dest='old_fix', help='', action='store_true')
+    parser.add_argument('--pbc-method', dest='pbc_method', default='Wigner_Sitz',
+                        help='select method to do periodic image correction')
     parser.add_argument('-o', '--output', dest='output', default='neb.csv', help='output csv file')
     parser.add_argument('-s', '--struct', dest='struct', help='collect all structures to a directory')
     args = parser.parse_args(argv)
@@ -43,7 +45,7 @@ def main(argv=None):
     elif args.fix:
         fix_method = 'Wigner_Sitz'
     else:
-        fix_method = 'None'
+        fix_method = args.pbc_method
     path = PathInterpolator(path_struct, fix_method)
     path_param = path._t
 

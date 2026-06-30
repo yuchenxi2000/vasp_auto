@@ -8,6 +8,19 @@ from typing import Callable, TypeVar
 from vaspauto.core.host_info import host
 
 
+def auto_ncore(num_tasks: int) -> int:
+    """Return the divisor of *num_tasks* closest to sqrt(num_tasks)."""
+    target = num_tasks ** 0.5
+    # scan downward from floor(sqrt) to find the first divisor
+    low = 1
+    for d in range(int(target), 0, -1):
+        if num_tasks % d == 0:
+            low = d
+            break
+    high = num_tasks // low
+    return high if abs(high - target) < abs(low - target) else low
+
+
 def sub_tilde_home_dir(s: str) -> str:
     """Expand a leading ``~`` to the cluster home directory (Unix semantics)."""
     if s.startswith('~/'):

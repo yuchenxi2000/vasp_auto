@@ -127,6 +127,12 @@ label = { glob = "structures/*/*.vasp" }
 | `executable` | string | 否 | `"vasp_std"` | 可执行文件。以 `vasp` 开头→VASP 模式，以 `cp2k` 开头→CP2K 模式。 |
 | `preprocess` | array | 否 | `[]` | 预处理动作列表，在计算前按顺序执行。 |
 | `postprocess` | array | 否 | `[]` | 后处理动作列表，在计算完成后按顺序执行。 |
+| `parallel` | table | 否 | `{type = "ncore"}` | 并行参数自动设置（v5.4+）。`type = "ncore"` 自动设 NCORE，`type = "off"` 手动 |
+
+```toml
+parallel = { type = "ncore" }   # 自动 NCORE
+parallel = { type = "off" }     # 手动设置
+```
 
 ### name — 命名与变量展开
 

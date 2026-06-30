@@ -14,7 +14,7 @@ from typing import Optional
 
 from vaspauto.io import incar, potcar, cp2k_input, kpoints
 from vaspauto.core.host_info import host
-from vaspauto.core.util import read_last_line
+from vaspauto.core.util import read_last_line, auto_ncore
 
 
 pattern_ionic_step = re.compile(r' *[0-9]+ F= ')
@@ -34,6 +34,7 @@ class CalcStatus(enum.Enum):
     FINISHED = 1
     NEEDS_RERUN = 2
     UNCONVERGED = 3
+    RUNNING = 4
 
 
 class Calculation:
@@ -61,9 +62,11 @@ class Calculation:
         if lock_file.is_file():
             lock_file.unlink()
 
-    def prepare(self):
-        """Set up for execution: create directory, preprocess, check status, lock."""
+    def mk_calc_dir(self):
         self.calc_dir.mkdir(exist_ok=True, parents=True)
+
+    def prepare(self):
+        """Set up for execution: preprocess, check status."""
         self.preprocess()
         self.status = self.check_status()
 
@@ -227,19 +230,28 @@ class VASPCalculation(Calculation):
         else:
             self.incar_obj.write_file(self.calc_dir.joinpath('INCAR'))
 
+    def is_neb_calc(self) -> bool:
+        """check if this is a NEB calculation (has 01/ directory)"""
+        return self.calc_dir.joinpath('01').is_dir()
+
     def run(self, num_tasks: int, cpus_per_task: int):
         print(f'start running vasp task: {self.calculation["name"]}', flush=True)
         # switch to calculation directory
         os.chdir(self.calc_dir)
+        # check for NEB calculation
+        is_neb = self.is_neb_calc()
+        tag_images = self.incar_obj.get('IMAGES')
+        if tag_images is None:
+            n_img = 0
+            is_neb = False
+        else:
+            n_img = int(tag_images)
         # copy CONTCAR to POSCAR for unconverged run
         if self.status == CalcStatus.UNCONVERGED:
-            # check if this is a NEB calculation (has 01/ directory)
-            if self.calc_dir.joinpath('01').is_dir():
-                tag_images = self.incar_obj.get('IMAGES')
-                n_images = 0 if tag_images is None else int(tag_images)
+            if is_neb:
                 # intermediate images: 01/ through 0{n_images}/
                 # skip 00/ (initial) and 0{n_images+1}/ (final)
-                for i in range(1, n_images + 1):
+                for i in range(1, n_img + 1):
                     image_dir = self.calc_dir.joinpath(f'{i:02d}')
                     contcar = image_dir.joinpath('CONTCAR')
                     poscar = image_dir.joinpath('POSCAR')
@@ -248,6 +260,21 @@ class VASPCalculation(Calculation):
             else:
                 shutil.copy(self.calc_dir.joinpath('CONTCAR'),
                             self.calc_dir.joinpath('POSCAR'))
+        # ensure that num_tasks is divisible by IMAGES for neb calculation
+        if is_neb:
+            num_tasks = num_tasks // n_img * n_img
+        # auto parallel settings
+        parallel_cfg = self.calculation.get('parallel', {'type': 'ncore'})
+        if parallel_cfg.get('type') == 'ncore':
+            if is_neb:
+                task_per_struct = num_tasks // n_img
+            else:
+                task_per_struct = num_tasks
+            ncore_val = auto_ncore(task_per_struct)
+            self.incar_obj.del_key('NPAR')
+            self.incar_obj.set('KPAR', '1')
+            self.incar_obj.set('NCORE', str(ncore_val))
+            self.incar_obj.write_file(self.calc_dir / 'INCAR')
         # set output files, env and run
         stdout = self.calc_dir.joinpath('out.txt')
         stderr = self.calc_dir.joinpath('err.txt')

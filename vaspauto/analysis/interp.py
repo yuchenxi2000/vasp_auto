@@ -150,6 +150,8 @@ def main(argv=None):
     parser.add_argument('--prec', type=int, default=10, help='output precision')
     parser.add_argument('--fix', help='', action='store_true')
     parser.add_argument('--old-fix', dest='old_fix', help='', action='store_true')
+    parser.add_argument('--pbc-method', dest='pbc_method', default='Wigner_Sitz',
+                        help='select method to do periodic image correction')
     parser.add_argument('--no-endpoint', dest='no_endpoint', help='', action='store_true')
     parser.add_argument('--no-startpoint', dest='no_startpoint', help='', action='store_true')
     parser.add_argument('--start-idx', dest='start_idx', type=int)
@@ -178,7 +180,7 @@ def main(argv=None):
     elif args.fix:
         fix_method = 'Wigner_Sitz'
     else:
-        fix_method = 'None'
+        fix_method = args.pbc_method
 
     if args.spec:
         images = parse_path_spec(args.spec, orig_images, fix_method)
