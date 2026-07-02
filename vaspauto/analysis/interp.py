@@ -20,7 +20,7 @@ def parse_path_spec(spec: str, old_path: list[Poscar],
                     fix_method: str = 'Wigner_Sitz') -> list[Poscar]:
     """Parse a path description string and return the new path.
 
-    See ``docs/路径重新插值方法.md`` for the syntax.
+    See ``docs/analysis-interp.md`` for the syntax.
 
     Parameters
     ----------
