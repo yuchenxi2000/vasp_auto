@@ -22,12 +22,6 @@ pip install .                          # 基础安装
 
 # 如需数据分析功能（scipy, numpy）
 pip install ".[analysis]"
-
-# 如需输出展开后的配置文件（--write-expanded-config）
-pip install ".[debug]"
-
-# 安装所有可选功能
-pip install ".[analysis,debug]"
 ```
 
 依赖：Python ≥ 3.10、`filelock`、`tomli`（Python < 3.11 时需要）。
@@ -124,7 +118,7 @@ vaspauto run -c my_calc.toml --print-groups -n 1
 | `--print-num-groups` | 打印独立任务组数后退出 |
 | `--print-groups` | 打印任务组详情后退出 |
 | `--rm-locks` | 清除所有锁文件（手动取消任务后使用） |
-| `--write-expanded-config` | 输出变量展开后的配置文件（调试用，需 `tomli_w`） |
+| `--write-expanded-config` | 输出变量展开后的配置文件（调试用） |
 
 ## 数据分析
 
@@ -142,6 +136,7 @@ vaspauto analysis interp --spec "0,1,3:2" -p POSCAR_00 POSCAR_01 POSCAR_02 POSCA
 |------|------|
 | [analysis-energy.md](docs/analysis-energy.md) | 计算结果汇总 |
 | [analysis-interp.md](docs/analysis-interp.md) | NEB 路径重新插值 |
+| [analysis-neb.md](docs/analysis-neb.md) | NEB 路径能量分析 |
 
 ## 配置文件格式
 

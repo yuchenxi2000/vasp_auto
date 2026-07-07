@@ -7,10 +7,10 @@
 _vaspauto_complete() {
     if [ "$COMP_CWORD" -eq 1 ] 2>/dev/null; then
         # bash
-        COMPREPLY=($(compgen -W "submit run analysis" -- "${COMP_WORDS[1]}"))
+        COMPREPLY=($(compgen -W "submit run analysis log" -- "${COMP_WORDS[1]}"))
     elif [[ "$words" != "" ]]; then
         # zsh
-        compadd submit run analysis
+        compadd submit run analysis log
     fi
 }
 

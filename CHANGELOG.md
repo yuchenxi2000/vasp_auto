@@ -1,5 +1,50 @@
 # Changelog
 
+## 5.4 (2026-07)
+
+### 全局历史日志
+
+- 新增 `JobLogger`（`core/logger.py`）：向 `~/.config/vaspauto/history.jsonl` 追加 JSONL 格式的全局作业历史
+- `vaspauto submit` 自动记录提交信息（时间、job_id、config 路径、资源分配）
+- 作业内自动记录 `job_start` / `job_end` 事件（含耗时和结果汇总）
+- `vaspauto log` 命令：结合历史日志和 Slurm（`squeue` / `sacct`）查看所有作业状态
+- 区分正常完成、异常退出（VaspAuto 框架崩溃）、失败、超时等状态
+- sbatch 改用 `--parsable` 参数捕获 job ID（之前被丢弃）
+- 文档：`docs/log-command.md`
+
+### Task → Job 重命名
+
+- `core/task.py` → `core/job.py`，类名 `Task` → `Job`，与 Slurm "job" 概念对齐
+- 相关文档、注释、docstring 同步更新
+
+### KPOINTS 改进
+
+- `generate_kpoints` 新增 `type` 参数：支持 `"G"`（Gamma-centered，默认）和 `"M"`（Monkhorst-Pack）
+- 新增 `shift` 参数：支持自定义 k 点网格偏移 `[s1, s2, s3]`
+- 完全向后兼容，现有配置无需修改
+
+### CLI
+
+- 新增 `vaspauto log` 子命令（`log_cli.py`）
+- shell 补全脚本（`completion.sh`）更新
+
+### 分析模块
+
+- NEB 分析新增 `--pbc-method` 选项：`Wigner_Sitz`（默认）/ `Old_Simple` / `None`
+- `--fix` / `--old-fix` 保留为快捷别名
+- 新增 NEB 分析文档（`docs/analysis-neb.md`）
+
+### 集群配置
+
+- `host_info.py` 支持自动检测：通过 `sinfo` 发现分区和 CPU 核数，无配置时自动生成 `host.toml`
+- `tomli_w` 提升为必需依赖（从 `[debug]` 可选依赖移入核心依赖）
+
+### 清理
+
+- 移除 `host.toml` 中未使用的 `match` 字段
+
+---
+
 ## 5.3 (2026-06)
 
 ### 包结构

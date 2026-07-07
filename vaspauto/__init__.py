@@ -6,4 +6,4 @@ Usage:
     python3 -m vaspauto scheduler -c config.toml -n 112
 """
 
-__version__ = '5.3'
+__version__ = '5.4'

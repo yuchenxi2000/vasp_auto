@@ -45,7 +45,7 @@ def build_neighbors(calcs: Iterable[Calculation]) -> None:
 def find_components(calcs: list[Calculation]) -> list[list[Calculation]]:
     """Divide calculations into connected components.
 
-    Returns a list of lists; within each sublist the tasks are connected via
+    Returns a list of lists; within each sublist the calculations are connected via
     dependency edges.  Isolated nodes (no dependencies) each form their own
     single-element component.
     """

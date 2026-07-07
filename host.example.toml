@@ -4,9 +4,6 @@
 # Each cluster should have its own host.toml deployed at that location.
 
 name = "my_hpc"
-# string returned by `hostname` command (both login node and task node),
-# can be a pattern supported by fnmatch module. error-checking only, can be unset
-match = ["node*"]
 default_partition = "partition1"
 home_dir = "/path/to/your/home/dir"
 

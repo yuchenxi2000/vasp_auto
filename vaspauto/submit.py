@@ -11,6 +11,7 @@ import subprocess
 
 from vaspauto import __version__
 from vaspauto.core.host_info import host
+from vaspauto.core.logger import JobLogger
 
 
 def main(argv=None):
@@ -170,8 +171,6 @@ python3 -m vaspauto.run -c {config_file} -n {ntasks} --nc {cpus_per_task} 1>pyou
         if not args.env:
             job_script_string += host.environment_vasp_str
         job_script_string += f'cd {job_dir}\n'
-        # TODO: needs testing
-        # if cpus_per_task > 1:
         job_script_string += f'export OMP_NUM_THREADS={cpus_per_task}\n'
         job_script_string += f'mpirun -n {ntasks} vasp_std 1>out_{job_name}.txt 2>err_{job_name}.txt\n'
     elif args.task == 'cp2k+py':
@@ -196,8 +195,6 @@ python3 -m vaspauto.run -c {config_file} -n {ntasks} --nc {cpus_per_task} 1>pyou
             else:
                 cp2k_output_file = f'{cp2k_input_file}.out'
         job_script_string += f'cd {job_dir}\n'
-        # TODO: needs testing
-        # if cpus_per_task > 1:
         job_script_string += f'export OMP_NUM_THREADS={cpus_per_task}\n'
         job_script_string += (f'mpirun -n {ntasks} cp2k.psmp -o {cp2k_output_file} {cp2k_input_file} '
                               f'1>out_{job_name}.txt 2>err_{job_name}.txt\n')
@@ -206,14 +203,38 @@ python3 -m vaspauto.run -c {config_file} -n {ntasks} --nc {cpus_per_task} 1>pyou
         print('warning: unknown task type. empty script generated.')
 
     # submit or write job script
+    slurm_job_id = None
     if args.submit:
-        process = subprocess.Popen(['sbatch'], stdin=subprocess.PIPE)
-        process.stdin.write(job_script_string.encode('utf-8'))
-        process.stdin.close()
-        process.communicate()
+        result = subprocess.run(['sbatch', '--parsable'],
+                                input=job_script_string,
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            slurm_job_id = result.stdout.strip()
+            print(f'Submitted batch job {slurm_job_id}', flush=True)
+        else:
+            print(f'sbatch error: {result.stderr.strip()}', flush=True)
     else:
         with output_script.open('w') as fout:
             fout.write(job_script_string)
+
+    # write global history log
+    logger = JobLogger()
+    logger.log({
+        'event': 'submit',
+        'job_id': slurm_job_id,
+        'job_name': job_name,
+        'config': str(config_file),
+        'work_dir': str(job_dir),
+        'task_type': args.task,
+        'partition': host.partition,
+        'nodes': nodes,
+        'ntasks': ntasks,
+        'tasks_per_node': tasks_per_node,
+        'cpus_per_task': cpus_per_task,
+        'host': host.name,
+        'version': __version__,
+        'script': str(output_script) if not args.submit else None,
+    })
 
 
 if __name__ == '__main__':

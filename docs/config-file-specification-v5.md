@@ -355,7 +355,30 @@ INCAR 文件来自 `calc_dir/INCAR`（通常由 `copy` 或 `cp2k_input` 等前�
 {func = "generate_kpoints", kp = [4, 4, 1]}
 ```
 
-生成自动 K 点网格（Gamma-centered），写入 `calc_dir/KPOINTS`。
+生成自动 K 点网格，写入 `calc_dir/KPOINTS`。默认 Gamma-centered、零偏移。
+
+**参数：**
+
+| 键 | 类型 | 默认 | 说明 |
+|----|------|------|------|
+| `kp` | `list[int]` (长度 3) | 必填 | 三个方向的 k 点格点数 `[N1, N2, N3]` |
+| `type` | `str` | `"G"` | 网格类型：`"G"` = Gamma-centered，`"M"` = Monkhorst-Pack |
+| `shift` | `list[float]` (长度 3) | `[0, 0, 0]` | 可选偏移 `[s1, s2, s3]` |
+
+**示例：**
+
+```toml
+# Gamma-centered（默认）
+{func = "generate_kpoints", kp = [4, 4, 4]}
+
+# Monkhorst-Pack 网格
+{func = "generate_kpoints", kp = [4, 4, 4], type = "M"}
+
+# 带偏移
+{func = "generate_kpoints", kp = [4, 4, 4], shift = [0.5, 0.5, 0.0]}
+```
+
+> *5.4 新增：`type` 和 `shift` 参数。*
 
 ---
 

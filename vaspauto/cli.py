@@ -12,11 +12,12 @@ import sys
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 -m vaspauto <submit|run|analysis> [...]")
+        print("Usage: python3 -m vaspauto <submit|run|analysis|log> [...]")
         print()
         print("  submit    generate or submit a Slurm job script")
         print("  run       execute calculations (called from Slurm job)")
         print("  analysis  data analysis and post-processing")
+        print("  log       show job status history")
         sys.exit(1)
 
     cmd = sys.argv[1]
@@ -30,9 +31,12 @@ def main():
         _main(argv)
     elif cmd == 'analysis':
         _analysis_dispatch(argv)
+    elif cmd == 'log':
+        from vaspauto.log_cli import main as _main
+        _main(argv)
     else:
         print(f"Unknown command: {cmd}")
-        print("Available: submit, run, analysis")
+        print("Available: submit, run, analysis, log")
         sys.exit(1)
 
 

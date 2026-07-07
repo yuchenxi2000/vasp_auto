@@ -11,11 +11,11 @@ requires-python = ">=3.10"
 dependencies = [
     "filelock",
     "tomli; python_version < '3.11'",
+    "tomli_w",
 ]
 
 [project.optional-dependencies]
 analysis = ["scipy", "numpy"]
-debug = ["tomli_w"]
 
 [project.scripts]
 vaspauto = "vaspauto.cli:main"

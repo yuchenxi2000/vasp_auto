@@ -21,8 +21,9 @@ vaspauto analysis interp -p POSCAR_00 POSCAR_01 -n 5 -d output/
 | `-i, --init` / `-f, --final` | 仅指定初末态（等价于 `-p init final`） |
 | `-n, --num` | 插值点数（`--spec` 时忽略） |
 | `-d, --dir` | 输出目录 |
-| `--fix` | 使用 Wigner-Seitz 最近镜像修正 |
-| `--old-fix` | 使用旧版 ±1 修正 |
+| `--pbc-method` | 选择镜像修正方法。可选：`Wigner_Sitz`（默认，基于最小距离修正）、`Old_Simple`（旧版 ±1 修正）、`None`（不修正） |
+| `--fix` | 使用 Wigner-Seitz 最近镜像修正（等价于 `--pbc-method Wigner_Sitz`） |
+| `--old-fix` | 使用旧版 ±1 修正（等价于 `--pbc-method Old_Simple`） |
 | `--no-startpoint` / `--no-endpoint` | 排除首/尾端点 |
 | `--start-idx` | 输出文件起始编号，默认 0 |
 | `--prec` | 输出精度（小数位数），默认 10 |

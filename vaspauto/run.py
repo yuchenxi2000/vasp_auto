@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """
-Task scheduler: reads the TOML config, expands variable loops, resolves
+Job scheduler: reads the TOML config, expands variable loops, resolves
 dependencies (topological sort), and dispatches calculations via calc_runner.
 
 File locks allow multiple Slurm jobs to share one config file safely.
@@ -9,7 +9,7 @@ import argparse
 from pathlib import Path
 
 from vaspauto import __version__
-from vaspauto.core.task import Task
+from vaspauto.core.job import Job
 
 
 def main(argv=None):
@@ -31,33 +31,33 @@ def main(argv=None):
     parser.add_argument('--nc', dest='cpus_per_task', type=int, default=1, help='number of cpus per task')
     parser.add_argument('--rm-locks', dest='rm_locks', action='store_true',
                         help='remove all lock files. these files should be removed before next submission '
-                             'if task is cancelled mannually.')
+                             'if job is cancelled mannually.')
     args = parser.parse_args(argv)
 
-    # construct Task
-    task_obj = Task.from_config_file(Path(args.config), root_dir_overwrite=args.dir)
+    # construct Job
+    job_obj = Job.from_config_file(Path(args.config), root_dir_overwrite=args.dir)
 
     if args.write_expanded_config:
-        task_obj.write_config(args.write_expanded_config)
+        job_obj.write_config(args.write_expanded_config)
         return
 
     if args.print_num_comps:
-        print(f'number of disconnected components: {len(task_obj.calc_comps)}')
+        print(f'number of disconnected components: {len(job_obj.calc_comps)}')
         return
 
     if args.print_comps:
-        task_obj.print_components()
+        job_obj.print_components()
         return
 
     if args.rm_locks:
-        task_obj.rm_lock_files()
+        job_obj.rm_lock_files()
         return
 
     if not args.num_tasks:
         parser.error('number of tasks (-n option) is required to run calculations!')
 
     # ---- execute ----
-    task_obj.run(args.num_tasks, args.cpus_per_task)
+    job_obj.run(args.num_tasks, args.cpus_per_task)
 
 
 if __name__ == '__main__':

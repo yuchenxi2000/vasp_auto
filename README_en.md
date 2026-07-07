@@ -30,12 +30,6 @@ pip install .                          # basic install
 
 # with analysis support (scipy, numpy)
 pip install ".[analysis]"
-
-# with expanded config export (--write-expanded-config)
-pip install ".[debug]"
-
-# all optional features
-pip install ".[analysis,debug]"
 ```
 
 Requirements: Python ≥ 3.10, `filelock`, `tomli` (only needed on Python < 3.11).
@@ -133,7 +127,7 @@ See [resource allocation docs](docs/resource-allocation-logic.md) for the deriva
 | `--print-num-groups` | Print number of independent task groups, then exit |
 | `--print-groups` | Print task group details, then exit |
 | `--rm-locks` | Remove all lock files (use after cancelling a job) |
-| `--write-expanded-config` | Export the expanded config (debug; requires `tomli_w`) |
+| `--write-expanded-config` | Export the expanded config (debug) |
 
 ## Data Analysis
 
@@ -151,6 +145,7 @@ vaspauto analysis interp --spec "0,1,3:2" -p POSCAR_00 POSCAR_01 POSCAR_02 POSCA
 |----------|-------------|
 | [analysis-energy.md](docs/analysis-energy.md) | Energy & status report |
 | [analysis-interp.md](docs/analysis-interp.md) | NEB path re-interpolation |
+| [analysis-neb.md](docs/analysis-neb.md) | NEB path energy analysis |
 
 ## Documentation
 

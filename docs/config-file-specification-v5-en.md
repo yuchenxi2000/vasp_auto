@@ -335,7 +335,31 @@ tags are set via `set_label_incar`.
 {func = "generate_kpoints", kp = [4, 4, 1]}
 ```
 
-Writes a Gamma-centered automatic k-point mesh to `calc_dir/KPOINTS`.
+Writes an automatic k-point mesh to `calc_dir/KPOINTS`.  Defaults to
+Gamma-centered with zero shift.
+
+**Parameters:**
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `kp` | `list[int]` (length 3) | required | Subdivisions ``[N1, N2, N3]`` along reciprocal axes |
+| `type` | `str` | `"G"` | Mesh type: ``"G"`` = Gamma-centered, ``"M"`` = Monkhorst-Pack |
+| `shift` | `list[float]` (length 3) | `[0, 0, 0]` | Optional shift ``[s1, s2, s3]`` |
+
+**Examples:**
+
+```toml
+# Gamma-centered (default)
+{func = "generate_kpoints", kp = [4, 4, 4]}
+
+# Monkhorst-Pack mesh
+{func = "generate_kpoints", kp = [4, 4, 4], type = "M"}
+
+# With custom shift
+{func = "generate_kpoints", kp = [4, 4, 4], shift = [0.5, 0.5, 0.0]}
+```
+
+> *New in 5.4: ``type`` and ``shift`` parameters.*
 
 ---
 

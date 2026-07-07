@@ -1,10 +1,13 @@
+import os
 import sys
+import time
 import filelock
 import warnings
 from pathlib import Path
 from os import PathLike
 
 from vaspauto import __version__
+from vaspauto.core.logger import JobLogger
 from typing import Optional
 
 if sys.version_info >= (3, 11):
@@ -17,7 +20,7 @@ from vaspauto.core.util import sub_tilde_home_dir, assert_absolute_dir, calc_var
 from vaspauto.core import dag
 
 
-class Task:
+class Job:
     def __init__(self):
         self.root_dir = Path('..')
         self.calc_comps: list[list[Calculation]] = []
@@ -84,32 +87,43 @@ class Task:
             return self
 
     def write_config(self, config_path: PathLike) -> None:
-        try:
-            import tomli_w
-            calc_list: list[Calculation] = []
-            for comp in self.calc_comps:
-                for calc in comp:
-                    calc_list.append(calc)
-            config = {
-                'version': __version__,
-                'global': {
-                    'root_dir': self.root_dir
-                },
-                'calculation': calc_list,
-            }
-            tomli_w.dump(config, open(config_path, 'wb'))
-        except ImportError('tomli_w is required for --write-expanded-config. Install it with: pip install tomli_w'):
-            pass
-
-    def run(self, num_tasks: int, cpus_per_task: int) -> None:
+        import tomli_w
+        calc_list: list[Calculation] = []
         for comp in self.calc_comps:
             for calc in comp:
+                calc_list.append(calc)
+        config = {
+            'version': __version__,
+            'global': {
+                'root_dir': self.root_dir
+            },
+            'calculation': calc_list,
+        }
+        tomli_w.dump(config, open(config_path, 'wb'))
+
+    def run(self, num_tasks: int, cpus_per_task: int) -> None:
+        logger = JobLogger()
+        t_start = time.monotonic()
+        logger.log({
+            'event': 'job_start',
+            'job_id': os.environ.get('SLURM_JOB_ID'),
+            'work_dir': str(self.root_dir),
+        })
+
+        # result counters
+        results = {'total': 0, 'finished': 0, 'unconverged': 0,
+                   'failed': 0, 'skipped': 0, 'not_calculated': 0}
+
+        for comp in self.calc_comps:
+            for calc in comp:
+                results['total'] += 1
                 try:
                     calc.mk_calc_dir()
                     with filelock.SoftFileLock(calc.get_lock_file_path(), blocking=False):
                         calc.prepare()  # avoid two process doing preprocess simultaneously
                         if calc.status == CalcStatus.FINISHED:
                             print(f'skip finished task: {calc.name}', flush=True)
+                            results['skipped'] += 1
                             continue
                         # stop if any dependency is not finished
                         dep_unfinished = calc.get_unfinished_deps()
@@ -119,13 +133,30 @@ class Task:
                                   f'because dependencies are not finished: {dep_unfinished_str}',
                                   flush=True)
                             calc.status = CalcStatus.NOT_CALCULATED
+                            results['not_calculated'] += 1
                             continue
                         calc.run(num_tasks, cpus_per_task)
+                        if calc.status == CalcStatus.FINISHED:
+                            results['finished'] += 1
+                        elif calc.status == CalcStatus.UNCONVERGED:
+                            results['unconverged'] += 1
+                        elif calc.status == CalcStatus.NEEDS_RERUN:
+                            results['failed'] += 1
                 except filelock.Timeout:
                     print(f'skip component {calc.comp}, '
                           f'because another process is working on {calc.name}',
                           flush=True)
+                    results['skipped'] += 1
                     break
+
+        elapsed = time.monotonic() - t_start
+        logger.log({
+            'event': 'job_end',
+            'job_id': os.environ.get('SLURM_JOB_ID'),
+            'work_dir': str(self.root_dir),
+            'elapsed_s': round(elapsed, 1),
+            'results': results,
+        })
 
     def rm_lock_files(self) -> None:
         for comp in self.calc_comps:

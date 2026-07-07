@@ -152,7 +152,7 @@ class Calculation:
                     print(f'postprocess func {func_name} not found!')
 
     def run(self, num_tasks: int, cpus_per_task: int):
-        print(f'start running unknown task: {self.calculation["name"]}', flush=True)
+        print(f'start running unknown calculation: {self.calculation["name"]}', flush=True)
         self.postprocess()
 
 
@@ -194,7 +194,10 @@ class VASPCalculation(Calculation):
             return CalcStatus.NEEDS_RERUN
 
     def preprocess_generate_kpoints(self, action: dict):
-        kpoints.write_auto_gen_k_mesh(self.calc_dir.joinpath('KPOINTS'), action['kp'])
+        kpoints.write_auto_gen_k_mesh(self.calc_dir.joinpath('KPOINTS'),
+                                      action['kp'],
+                                      mesh_type=action.get('type', 'G'),
+                                      shift=action.get('shift', None))
 
     def preprocess_write_potcar(self, action: dict):
         if 'value' in action:
@@ -235,7 +238,7 @@ class VASPCalculation(Calculation):
         return self.calc_dir.joinpath('01').is_dir()
 
     def run(self, num_tasks: int, cpus_per_task: int):
-        print(f'start running vasp task: {self.calculation["name"]}', flush=True)
+        print(f'start running vasp calculation: {self.calculation["name"]}', flush=True)
         # switch to calculation directory
         os.chdir(self.calc_dir)
         # check for NEB calculation
@@ -345,7 +348,7 @@ class CP2KCalculation(Calculation):
         if self.cp2k_input is None:
             raise Exception('cp2k input file not given!')
         # run
-        print(f'start running cp2k task: {self.calculation["name"]}', flush=True)
+        print(f'start running cp2k calculation: {self.calculation["name"]}', flush=True)
         os.chdir(self.calc_dir)
         stdout = self.calc_dir.joinpath('out.txt')
         stderr = self.calc_dir.joinpath('err.txt')

@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 
 from vaspauto.core.calc import CalcStatus, VASPCalculation
-from vaspauto.core.task import Task
+from vaspauto.core.job import Job
 from vaspauto.core.util import get_energy_str_oszicar
 from vaspauto.io.incar import Incar
 
@@ -20,12 +20,12 @@ def main(argv=None):
     parser.add_argument('-o', '--output', dest='output', default='energy.csv', help='output csv file')
     args = parser.parse_args(argv)
 
-    # construct Task
-    task_obj = Task.from_config_file(Path(args.config), root_dir_overwrite=args.dir)
+    # construct Job
+    job_obj = Job.from_config_file(Path(args.config), root_dir_overwrite=args.dir)
 
     out_data = []
 
-    for comp in task_obj.calc_comps:
+    for comp in job_obj.calc_comps:
         for calc in comp:
             if isinstance(calc, VASPCalculation):
                 # check status
