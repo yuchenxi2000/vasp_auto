@@ -282,6 +282,10 @@ tmbootpicker.efi
 ## Claude Code (personal settings, plans, memory)
 .claude/
 
+## Reasonix (personal settings, skills, memory)
+.reasonix/
+reasonix.toml
+
 ## VASP calculation artifacts (lock files, output)
 *.lock
 

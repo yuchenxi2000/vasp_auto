@@ -26,6 +26,11 @@ pip install ".[analysis]"
 
 依赖：Python ≥ 3.10、`filelock`、`tomli`（Python < 3.11 时需要）。
 
+> **HPC 离线环境**：如果遇到 `setuptools>=64` 找不到的错误，加 `--no-build-isolation`：
+> ```bash
+> pip install --no-build-isolation ".[analysis]"
+> ```
+
 ### 2. 配置集群信息
 
 ```bash

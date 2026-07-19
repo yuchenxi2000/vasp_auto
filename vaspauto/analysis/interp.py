@@ -118,7 +118,7 @@ def _parse_segment(seg: str, old_path: list[Poscar],
             is_first = (k == 0)
             is_last = (k == len(indices) - 2)
             inc_start = include_start if is_first else False
-            inc_end = include_end if is_last else False
+            inc_end = include_end if is_last else True
             images.extend(p.interpolate(n, inc_start, inc_end))
         return images
     else:

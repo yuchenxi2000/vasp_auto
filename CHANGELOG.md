@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.4.1 (2026-07)
+
+### Bug 修复
+
+- `preprocess_copy` / `preprocess_move`：当 src 和 dest 解析为同一文件时不再报错或空操作，而是打印 notice 后跳过（`core/calc.py`）
+- `analysis interp`：`[0-n::m]` DSL 展开分段插值时，非首段共享端点使用左开区间、非末段共享端点使用右闭区间，避免遗漏区间端点（`analysis/interp.py`）
+
+---
+
 ## 5.4 (2026-07)
 
 ### 全局历史日志

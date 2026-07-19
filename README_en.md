@@ -34,6 +34,11 @@ pip install ".[analysis]"
 
 Requirements: Python ≥ 3.10, `filelock`, `tomli` (only needed on Python < 3.11).
 
+> **HPC offline environments**: if you get `setuptools>=64` not found, add `--no-build-isolation`:
+> ```bash
+> pip install --no-build-isolation ".[analysis]"
+> ```
+
 ### 2. Configure your cluster
 
 ```bash

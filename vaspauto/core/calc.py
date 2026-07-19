@@ -108,6 +108,9 @@ class Calculation:
         if not src.exists():
             print(f'warning: copy: file {src} not exist!')
             return
+        if src.resolve() == dest.resolve():
+            print(f'notice: copy: src and dest are the same file, skip ({src})')
+            return
         shutil.copy(src, dest)
 
     def preprocess_move(self, action: dict):
@@ -117,6 +120,9 @@ class Calculation:
         src = self.get_file_path(action['src'], default_relative='root_dir')
         if not src.exists():
             print(f'warning: move: file {src} not exist!')
+            return
+        if src.resolve() == dest.resolve():
+            print(f'notice: move: src and dest are the same file, skip ({src})')
             return
         shutil.move(src, dest)
 
