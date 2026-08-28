@@ -46,13 +46,14 @@ def test_range_open_start():
 def test_pairwise():
     path = _make_path(5)
     r = parse_path_spec("0-3::2", path)
-    # 3 pairs: (0-1), (1-2), (2-3), each with 2 interior + shared pts
-    # 0, 2img, 1, 2img, 2, 2img, 3 = 7 structures? No:
-    # pair 0-1: start=0, 2 interior, no end → 3
-    # pair 1-2: no start, 2 interior, no end → 2
-    # pair 2-3: no start, 2 interior, end=3 → 3
-    # total = 8
-    assert len(r) == 8
+    # 3 pairs: (0-1), (1-2), (2-3), each with 2 interior images.
+    # Non-first pairs: left-open (shared start already included by prev pair).
+    # Non-last pairs:  right-closed (shared end needed by next pair).
+    # pair 0-1: start, 2 interior, end → 4
+    # pair 1-2: no start, 2 interior, end → 3
+    # pair 2-3: no start, 2 interior, end → 3
+    # total = 10
+    assert len(r) == 10
 
 
 def test_discrete_anchors():
@@ -103,13 +104,16 @@ def test_manual_verify_counts():
     # Half-open left: n interior + 1 end = n+1
     assert len(parse_path_spec("(0-1:3]", path)) == 4    # 3+1
 
-    # Pairwise n=0: start of first pair + end of last pair only
-    assert len(parse_path_spec("0-3::0", path)) == 2
+    # Pairwise n=0: only the first pair's start and last pair's end,
+    # plus interior shared endpoints from each pair.
+    # (0,1): start, no int, end → 2   (1,2): no start, no int, end → 1
+    # (2,3): no start, no int, end → 1   total = 4
+    assert len(parse_path_spec("0-3::0", path)) == 4
 
     # Pairwise n=1: 1 interior per pair, shared points not duplicated
-    # (0,1): start=0, 1int, no_end=2  (1,2): no_start, 1int, no_end=1
-    # (2,3): no_start, 1int, end=3=2  total=5
-    assert len(parse_path_spec("0-3::1", path)) == 5
+    # (0,1): start, 1int, end=3  (1,2): no_start, 1int, end=2
+    # (2,3): no_start, 1int, end=2  total=7
+    assert len(parse_path_spec("0-3::1", path)) == 7
 
 
 if __name__ == '__main__':

@@ -5,46 +5,6 @@ from scipy.interpolate import CubicSpline
 from vaspauto.io.poscar import Poscar
 
 
-def mat2abc(R: np.ndarray) -> np.ndarray:
-    """Decompose a 3×3 lattice matrix into (a, b, c, α, β, γ)."""
-    abc = np.zeros(6)
-    for i in range(3):
-        abc[i] = np.linalg.norm(R[i, :])
-    # angles: α between b&c, β between c&a, γ between a&b
-    pairs = ((1, 2), (2, 0), (0, 1))
-    for i, (j, k) in enumerate(pairs):
-        cos_val = R[j, :] @ R[k, :] / (abc[j] * abc[k])
-        cos_val = np.clip(cos_val, -1.0, 1.0)
-        abc[3 + i] = np.arccos(cos_val)
-    return abc
-
-
-def abc2mat(abc) -> np.ndarray:
-    R = np.zeros([3, 3])
-    a = abc[0]
-    b = abc[1]
-    c = abc[2]
-    alpha = abc[3]
-    beta = abc[4]
-    gamma = abc[5]
-    cos = np.cos
-    sin = np.sin
-    sqrt = np.sqrt
-    cos_d = (cos(alpha) - cos(beta) * cos(gamma)) / (sin(beta) * sin(gamma))
-    if cos_d > 1:
-        cos_d = 1
-    elif cos_d < -1:
-        cos_d = -1
-    sin_d = sqrt(1 - cos_d ** 2)
-    R[0, 0] = a
-    R[1, 0] = b * cos(gamma)
-    R[1, 1] = b * sin(gamma)
-    R[2, 0] = c * cos(beta)
-    R[2, 1] = c * sin(beta) * cos_d
-    R[2, 2] = c * sin(beta) * sin_d
-    return R
-
-
 def pbc_min_vec(vec: np.ndarray, lat_mat: np.ndarray):
     vec = vec % np.full(3, 1.0)
     vec_cart = vec @ lat_mat  # to Cartesian coordinates
@@ -87,13 +47,70 @@ def img_correction(st_ref: Poscar, st_target: Poscar, method='Wigner_Sitz'):
         raise ValueError(f"unknown fix method: '{method}'")
 
 
+def gssneb_dist(s1: Poscar, s2: Poscar) -> float:
+    """Generalised solid-state NEB distance between two structures.
+
+    Separates atomic rearrangement from cell deformation, removes
+    collective rigid-body translation via centre-of-mass alignment,
+    and filters cell rotation through the symmetric strain tensor.
+    The atomic and cell contributions are combined in a single scalar
+    with consistent length units (Å).
+
+    Parameters
+    ----------
+    s1, s2 : Poscar
+        Two structures to compare.  They are converted to fractional
+        (direct) coordinates internally.
+    """
+    s1.to_direct()
+    s2.to_direct()
+    hi = s1.lattice_vector   # 3×3
+    hj = s2.lattice_vector   # 3×3
+
+    # --- atomic part ---------------------------------------------------
+    si = s1.atoms            # (N, 3) fractional
+    sj = s2.atoms
+    ds = sj - si
+    # remove collective translation (centre-of-mass alignment)
+    ds -= ds.mean(axis=0, keepdims=True)
+
+    # convert fractional displacement → Cartesian via average lattice
+    h_avg = 0.5 * (hi + hj)
+    dR_atom_sq = float(np.sum((ds @ h_avg) ** 2))
+
+    # --- cell part -----------------------------------------------------
+    n_atoms = si.shape[0]
+    dh = hj - hi
+    try:
+        h_avg_inv = np.linalg.inv(h_avg)
+    except np.linalg.LinAlgError:
+        # degenerate cell — fall back to Frobenius norm of Δh
+        dR_cell_sq = float(np.sum(dh ** 2))
+    else:
+        grad_u = dh @ h_avg_inv          # displacement gradient
+        eps = 0.5 * (grad_u + grad_u.T)  # symmetric strain (removes rotation)
+        eps_norm = float(np.linalg.norm(eps, ord='fro'))
+        V_avg = abs(float(np.linalg.det(h_avg)))
+        # Jacobian scaling: √N · ⟨atomic spacing⟩ ≈ √N · (V/N)^{1/3}
+        J = np.sqrt(n_atoms) * (V_avg / n_atoms) ** (1.0 / 3.0)
+        dR_cell_sq = (J * eps_norm) ** 2
+
+    return float(np.sqrt(dR_atom_sq + dR_cell_sq))
+
+
 class PathInterpolator:
     """Spline-based interpolation along a sequence of POSCAR structures.
 
-    Each structure is mapped to a high-dimensional vector (lattice
-    parameters + atomic positions).  A cubic spline is then fitted along
-    the arc-length parameter of the path, treating each vector component
-    independently.
+    Each structure is mapped to a high-dimensional feature vector:
+    flattened 3×3 lattice matrix (9 components, Å) + fractional atomic
+    positions (3·N components, dimensionless).  A cubic spline is fitted
+    along the G-SSNEB arc-length parameter of the path, treating each
+    vector component independently.
+
+    The G-SSNEB distance (``gssneb_dist``) separates atomic rearrangement
+    from cell deformation, removes collective rigid-body translation,
+    and filters cell rotation — so identical structures that differ only
+    by translation yield zero arc length.
 
     Parameters
     ----------
@@ -117,22 +134,25 @@ class PathInterpolator:
         self._n_atoms = structures[0].atoms.shape[0]
         self._fix_method = fix_method
 
-        # Resolve PBC ambiguities between consecutive structures
+        # Ensure all structures are in fractional (direct) coordinates
+        # and resolve PBC ambiguities between consecutive structures.
+        for s in structures:
+            s.to_direct()
         for i in range(1, self.n_images):
-            structures[i].to_direct()
             img_correction(structures[i - 1], structures[i], fix_method)
 
-        # Build feature matrix: rows = images, cols = 6 + 3*n_atoms
-        self._features = np.empty((self.n_images, 6 + 3 * self._n_atoms))
+        # Build feature matrix: rows = images,
+        # cols = 9 (flattened 3×3 lattice matrix) + 3·N (fractional atoms).
+        self._features = np.empty((self.n_images, 9 + 3 * self._n_atoms))
         for i, s in enumerate(structures):
-            abc = mat2abc(s.lattice_vector)
-            self._features[i, :6] = abc
-            self._features[i, 6:] = s.atoms.ravel()
+            self._features[i, :9] = s.lattice_vector.ravel()
+            self._features[i, 9:] = s.atoms.ravel()
 
-        # Arc-length parameter t ∈ [0, 1]
-        diffs = np.diff(self._features, axis=0)
-        arc = np.linalg.norm(diffs, axis=1)
-        self._t = np.concatenate(([0.0], np.cumsum(arc)))
+        # Arc-length parameter t ∈ [0, 1] via G-SSNEB distance
+        self._t = np.zeros(self.n_images)
+        for i in range(self.n_images - 1):
+            self._t[i + 1] = self._t[i] + gssneb_dist(structures[i],
+                                                       structures[i + 1])
         self._t /= self._t[-1]
 
         # Build independent cubic splines per dimension
@@ -147,8 +167,8 @@ class PathInterpolator:
         """Return the interpolated ``Poscar`` at parameter *t* ∈ [0, 1]."""
         feats = np.array([sp(t) for sp in self._splines])
         s = copy.deepcopy(self.structures[0])
-        s.lattice_vector = abc2mat(feats[:6])
-        s.atoms = feats[6:].reshape(self._n_atoms, 3)
+        s.lattice_vector = feats[:9].reshape(3, 3)
+        s.atoms = feats[9:].reshape(self._n_atoms, 3)
         return s
 
     def interpolate(self, n: int, include_start: bool = False,
